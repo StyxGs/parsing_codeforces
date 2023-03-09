@@ -37,7 +37,7 @@ async def check_user_in_db(user_id: int) -> None:
 
 async def search_topic_id(conn, topic: list) -> list:
     """Находим id тем задач по их номеру в бд"""
-    topics_id = await conn.fetch('select id from topic where name = ANY($1::text[]) ', topic)
+    topics_id = await conn.fetch('select id from topic where topic_name = ANY($1::text[]) ', topic)
     return topics_id
 
 
@@ -50,17 +50,17 @@ async def all_difficulties():
 
 
 async def all_topics():
-    """Отдаёт список всех доступных сложностей"""
+    """Отдаёт список всех доступных тем"""
     conn = await connection()
-    difficulty = await conn.fetch('select name from topic order by name')
+    topics = await conn.fetch('select topic_name from topic order by topic_name')
     await conn.close()
-    return difficulty
+    return topics
 
 
 async def search_name_task_in_db(name: str) -> list:
     """Ищем задачу по названию или номеру"""
     conn = await connection()
-    task = await conn.fetch('select * from tasks where name = $1 or number = $1', name)
+    task = await conn.fetch('select * from tasks where task_name = $1 or number = $1', name)
     await conn.close()
     return task
 
@@ -71,12 +71,12 @@ async def list_tasks(parameters: dict, tg_id: int) -> list:
     topics: list = [x for x in parameters.values()]
     difficulty: int = int(parameters['difficulty'])
     tasks = await conn.fetch(
-        'select distinct tasks.id, tasks.number, tasks.name, tasks.number_solved, tasks.difficulty, '
+        'select distinct tasks.id, tasks.number, tasks.task_name, tasks.number_solved, tasks.difficulty, '
         'tasks.link '
         'from tasks '
         'inner join tasks_topic on tasks.number = tasks_topic.task_number '
         'inner join topic on tasks_topic.topic_id = topic.id '
-        'where tasks.difficulty = $1 and topic.name = ANY($2::text[]) and tasks.id not in '
+        'where tasks.difficulty = $1 and topic.topic_name = ANY($2::text[]) and tasks.id not in '
         '(select users_tasks.task_id from users_tasks '
         'inner join users on users_tasks.user_id = users.id '
         'where users.tg_id = $3)'
@@ -87,17 +87,29 @@ async def list_tasks(parameters: dict, tg_id: int) -> list:
 
 async def check_number_task_in_table_tasks_topic(number: str, conn) -> list:
     """Проверяем наличие номера задачи в бд"""
-    return await conn.execute('select task_number from tasks_topic where task_number = $1', number)
+    return await conn.fetchval('select exists(select task_number from tasks_topic where task_number = $1)', number)
 
 
 async def add_or_update_task(name: str, number: str, quantity: int, difficulty: int, link: str, conn):
     """Обновляем или добавляем данные задач в бд"""
     await conn.execute(
-        'insert into tasks (name, number, number_solved, difficulty, link) values ($1, $2, $3, $4, $5) '
+        'insert into tasks (task_name, number, number_solved, difficulty, link) values ($1, $2, $3, $4, $5) '
         'on conflict (number) do update set number_solved = $3, difficulty=$4',
         name, number, quantity, difficulty, link)
 
 
 async def add_topic_new_task(number: str, task_id: int, conn):
+    """Добавляем темы"""
     await conn.execute('insert into tasks_topic (task_number, topic_id) values ($1, $2)',
                        number, task_id)
+
+
+async def check_topic_db(conn, topic: str):
+    """Проверяем наличие темы в бд"""
+    return await conn.fetchval('select exists(select topic_name from topic where topic_name = $1)', topic)
+
+
+async def add_topic(conn, topic: str):
+    """Добавляем тему в бд"""
+    await conn.execute('insert into topic (topic_name) values ($1)',
+                       topic)

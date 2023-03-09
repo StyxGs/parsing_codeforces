@@ -49,7 +49,7 @@ async def difficulty_selection(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(ChoiceAction.choice, lambda x: x.data == 'yes')
 async def choose_add_topic(callback: CallbackQuery):
-    """Показывает список с выбором тем"""
+    """Показывает список с выбором тем, если пользователь собирается выбрать доп тему"""
     keyboard = await create_topic_list()
     await callback.message.edit_text(text='Выбери тему:', reply_markup=keyboard.as_markup())
 

@@ -21,7 +21,7 @@ async def create_topic_list() -> InlineKeyboardBuilder:
     list_topic: list = await all_topics()
     topics_buttons: list = []
     for tp in list_topic:
-        topics_buttons.append(InlineKeyboardButton(text=tp['name'], callback_data=tp['name']))
+        topics_buttons.append(InlineKeyboardButton(text=tp['topic_name'], callback_data=tp['topic_name']))
     topic_kb.row(*topics_buttons, width=1)
     return topic_kb
 

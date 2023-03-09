@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config.config_data import load_config
 from handlers import other_handlers, user_handlers
 from keyboards.set_menu import set_menu
-from services.services import starting_parsing
+from services.services import starting_parsing, add_topics_in_db
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ async def main():
     config = load_config()
 
     # Инициализируем Redis
-    redis = await aioredis.from_url(url=f'redis://localhost:6379', db=0)
+    redis = await aioredis.from_url(url=f'redis://bot_redis:6379', db=0)
 
     # Инициализируем хранилище
     storage: RedisStorage = RedisStorage(redis)
@@ -41,9 +41,8 @@ async def main():
 
     # Инициализируем apscheduler
     apscheduler = AsyncIOScheduler(timezone='Europe/Moscow')
-    apscheduler.add_job(starting_parsing, trigger='interval', hours=1)
+    apscheduler.add_job(starting_parsing, trigger='interval', minutes=2)
     apscheduler.start()
-
 
     # Инициализируем роутеры
     dp.include_router(user_handlers.router)
@@ -52,6 +51,7 @@ async def main():
     # Главное меню бота
     await set_menu(bot)
 
+    await add_topics_in_db()
     await starting_parsing()
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
