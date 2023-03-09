@@ -33,4 +33,19 @@ create table users_tasks
     id bigserial primary key,
     user_id integer not null references users,
     task_id integer not null references tasks
-)
+);
+
+create index tg_bot_task_index
+on tasks (task_name, number);
+
+create index tasks_topic_index
+on tasks_topic (task_number, topic_id);
+
+create index users_tasks_index
+on users_tasks (user_id, task_id);
+
+create index topic_index
+on topic (topic_name);
+
+create index users_index
+on users (tg_id);
