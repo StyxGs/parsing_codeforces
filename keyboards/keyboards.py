@@ -1,5 +1,6 @@
-from database.db import all_difficulties, all_topics
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
+
+from database.db import all_difficulties, all_topics
 
 
 async def create_difficulty_list() -> InlineKeyboardBuilder:
@@ -7,7 +8,7 @@ async def create_difficulty_list() -> InlineKeyboardBuilder:
     difficulty_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     list_difficulties: list = await all_difficulties()
     difficulty_buttons: list = []
-    for df in list_difficulties[:-1]:
+    for df in list_difficulties[1:-1]:
         difficulty_buttons.append(InlineKeyboardButton(text=df['difficulty'], callback_data=df['difficulty']))
     difficulty_kb.row(*difficulty_buttons, width=3)
     difficulty_kb.row(InlineKeyboardButton(text='Без сложности', callback_data=0), width=1)

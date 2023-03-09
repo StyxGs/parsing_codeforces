@@ -1,12 +1,16 @@
 from aiogram import Router
-from aiogram.filters import CommandStart, Text
-from aiogram.types import CallbackQuery, Message
-from keyboards.keyboards import starting_action, create_difficulty_list, create_topic_list, create_keyboard_yes_or_not, \
-    create_tasks_url, create_keyboard_name_and_number
+from aiogram.filters import Command, CommandStart, Text
 from aiogram.fsm.context import FSMContext
-from services.statesform import ChoiceAction
-from database.db import list_tasks, check_user_in_db, add_data_in_users_tasks, search_name_task_in_db
+from aiogram.types import CallbackQuery, Message
+
+from database.db import (add_data_in_users_tasks, check_user_in_db, list_tasks,
+                         search_name_task_in_db)
+from keyboards.keyboards import (create_difficulty_list,
+                                 create_keyboard_name_and_number,
+                                 create_keyboard_yes_or_not, create_tasks_url,
+                                 create_topic_list, starting_action)
 from services.services import info_about_tasks
+from services.statesform import ChoiceAction
 
 router: Router = Router()
 
@@ -16,6 +20,13 @@ async def start_command(message: Message):
     """Ответ на команду start и добавление пользователя в базу данных, если его нет"""
     keyboard = await starting_action()
     await check_user_in_db(message.from_user.id)
+    await message.answer(text='Выбери', reply_markup=keyboard.as_markup())
+
+
+@router.message(Command(commands=['choice']))
+async def start_command(message: Message):
+    """Ответ на команду choice"""
+    keyboard = await starting_action()
     await message.answer(text='Выбери', reply_markup=keyboard.as_markup())
 
 

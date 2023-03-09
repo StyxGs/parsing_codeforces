@@ -7,7 +7,7 @@ env.read_env()
 
 async def connection():
     """Подключаемся к бд"""
-    return await asyncpg.connect(database=env('DB_NAME'), user=env('DB_USER'),
+    return await asyncpg.create_pool(database=env('DB_NAME'), user=env('DB_USER'),
                                      password=env('DB_PASSWORD'),
                                      host=env('DB_HOST'), port=env('DB_PORT'))
 
@@ -39,18 +39,6 @@ async def search_topic_id(conn, topic: list) -> list:
     """Находим id тем задач по их номеру в бд"""
     topics_id = await conn.fetch('select id from topic where name = ANY($1::text[]) ', topic)
     return topics_id
-
-
-async def add_info_about_task_in_tasks_db(conn, data: list):
-    """Добавляем данные о задачи в бд"""
-    await conn.copy_records_to_table('tasks', records=data,
-                                     columns=('name', 'number', 'number_solved', 'difficulty', 'link'))
-
-
-async def add_info_about_topics_in_topics_db(conn, topics: list):
-    """Добавляем данные о темах задачи в бд"""
-    await conn.copy_records_to_table('tasks_topic', records=topics,
-                                     columns=('task_number', 'topic_id'))
 
 
 async def all_difficulties():
@@ -95,3 +83,21 @@ async def list_tasks(parameters: dict, tg_id: int) -> list:
         'limit 10', difficulty, topics[1:], tg_id)
     await conn.close()
     return tasks
+
+
+async def check_number_task_in_table_tasks_topic(number: str, conn) -> list:
+    """Проверяем наличие номера задачи в бд"""
+    return await conn.execute('select task_number from tasks_topic where task_number = $1', number)
+
+
+async def add_or_update_task(name: str, number: str, quantity: int, difficulty: int, link: str, conn):
+    """Обновляем или добавляем данные задач в бд"""
+    await conn.execute(
+        'insert into tasks (name, number, number_solved, difficulty, link) values ($1, $2, $3, $4, $5) '
+        'on conflict (number) do update set number_solved = $3, difficulty=$4',
+        name, number, quantity, difficulty, link)
+
+
+async def add_topic_new_task(number: str, task_id: int, conn):
+    await conn.execute('insert into tasks_topic (task_number, topic_id) values ($1, $2)',
+                       number, task_id)
