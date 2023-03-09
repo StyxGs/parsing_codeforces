@@ -32,7 +32,8 @@ create table users_tasks
 (
     id bigserial primary key,
     user_id integer not null references users,
-    task_id integer not null references tasks
+    task_id integer not null references tasks,
+    unique (user_id, task_id)
 );
 
 create index tg_bot_task_index
