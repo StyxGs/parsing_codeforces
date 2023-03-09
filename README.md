@@ -8,4 +8,5 @@
 <li>Создать файл .env по примеру(.env_example)</li>
 <li>Установить зависимости requirements.txt</li>
 <li>Создать таблицы (файл init.sql)</li>
+<li>Запустить бота через docker-compose или на локальном хосте (файл init.sql)</li>
 </ol>
