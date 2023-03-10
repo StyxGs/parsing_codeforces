@@ -51,7 +51,7 @@ async def difficulty_selection(callback: CallbackQuery, state: FSMContext):
 async def choose_add_topic(callback: CallbackQuery):
     """Показывает список с выбором тем, если пользователь собирается выбрать доп тему"""
     keyboard = await create_topic_list()
-    await callback.message.edit_text(text='Выбери тему:', reply_markup=keyboard.as_markup())
+    await callback.message.edit_text(text='Выбери тему:', reply_markup=keyboard.as_markup(), cache_time=1800)
 
 
 @router.callback_query(ChoiceAction.choice, lambda x: x.data == 'no')
@@ -96,8 +96,8 @@ async def search_for_task_by_name_or_number(callback: CallbackQuery, state: FSMC
 
 @router.callback_query(ChoiceAction.search, lambda x: x.data in ('name', 'number'))
 async def search_for_tasks_name_or_number(callback: CallbackQuery):
-    """Ищем задачу по имени ил номеру"""
-    await callback.message.edit_text(text='Введите название или номер задачи задачи.')
+    """Ищем задачу по имени или номеру"""
+    await callback.message.edit_text(text='Введите название или номер задачи.')
 
 
 @router.message(ChoiceAction.search)

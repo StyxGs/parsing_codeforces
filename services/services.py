@@ -7,7 +7,7 @@ from fake_useragent import UserAgent
 
 from database.db import (add_or_update_task, add_topic_new_task,
                          check_number_task_in_table_tasks_topic, connection,
-                         search_topic_id, check_topic_db, add_topic)
+                         search_topic_id, check_topic_db, add_topic, create_pool)
 
 
 async def add_topics_in_db():
@@ -76,13 +76,12 @@ async def parsing_once_an_hour(number: int, conn):
 
 async def starting_parsing():
     """Запускаем парсинг"""
-    tasks: list = []
-    conn = await connection()
+    connect = await create_pool()
     quantity_pages = await number_pages()
     for number in range(1, quantity_pages):
-        tasks.append(asyncio.create_task(parsing_once_an_hour(number, conn)))
-    await asyncio.gather(*tasks)
-    await conn.close()
+        async with connect.acquire() as conn:
+            await parsing_once_an_hour(number, conn)
+    await connect.close()
 
 
 async def search_topics(tasks: list) -> list:
@@ -94,6 +93,7 @@ async def search_topics(tasks: list) -> list:
                                  'inner join tasks_topic on topic.id = tasks_topic.topic_id '
                                  'where tasks_topic.task_number = $1', task['number'])
         topics.append(topic)
+    await conn.close()
     return topics
 
 

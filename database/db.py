@@ -12,12 +12,20 @@ async def connection():
                                      host=env('DB_HOST'), port=env('DB_PORT'))
 
 
+async def create_pool():
+    """Подключаемся к бд"""
+    return await asyncpg.create_pool(database=env('DB_NAME'), user=env('DB_USER'),
+                                     password=env('DB_PASSWORD'),
+                                     host=env('DB_HOST'), port=env('DB_PORT'), max_inactive_connection_lifetime=3)
+
+
 async def give_user_id(tg_user_id: int, conn) -> str:
     """Отдаёт id пользователя"""
     return await conn.fetchval('SELECT id FROM users WHERE tg_id = $1', tg_user_id)
 
 
 async def add_data_in_users_tasks(tg_user_id: int, tasks: list):
+    """Добавляет в бд задачи, которые просмотрел пользователь"""
     conn = await connection()
     user_id = await give_user_id(tg_user_id, conn)
     user_id_tasks_id_list = []
@@ -25,6 +33,7 @@ async def add_data_in_users_tasks(tg_user_id: int, tasks: list):
         user_id_tasks_id_list.append((user_id, task_id['id']))
     await conn.copy_records_to_table('users_tasks', records=user_id_tasks_id_list,
                                      columns=('user_id', 'task_id'))
+    await conn.close()
 
 
 async def check_user_in_db(user_id: int) -> None:
