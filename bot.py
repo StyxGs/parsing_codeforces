@@ -41,7 +41,7 @@ async def main():
 
     # Инициализируем apscheduler
     apscheduler = AsyncIOScheduler(timezone='Europe/Moscow')
-    apscheduler.add_job(starting_parsing, trigger='interval', minutes=5)
+    apscheduler.add_job(starting_parsing, trigger='interval', hours=1)
     apscheduler.start()
 
     # Инициализируем роутеры
